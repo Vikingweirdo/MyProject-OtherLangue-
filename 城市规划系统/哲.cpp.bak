@@ -1,0 +1,580 @@
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#define M 20
+#define F 5000
+typedef struct Graph{			//定义图的结构体
+	char b[M][M];
+	int n ,  e; 
+	int edges[M][M];
+}Graph;
+
+typedef struct EdgePrim{		//prim算法结构体
+  int beg,en;					//储存最小生成树的起始和终止节点
+  int length;					//最小生成树的长度
+}edge;
+typedef struct EdgeKruskal{		//kruskal算法结构体
+  int u,v;						//记录有边的起始节点和终止节点
+  int power;					//边的权值
+}Edge;
+	
+edge tree[M];					//定义最小生成树数组
+
+Graph G;						//定义全局图变量
+
+void Creat(char *name){
+	FILE *fp;					//指向文件的指针
+	int m = 0;
+	char a[10];					//储存地点名字
+	fp = fopen(name,"r");		//打开名字为name的文件		
+					
+	int i,  begin , end , pow  , count=0;
+
+	printf("Input the information of the City\n");
+
+	fscanf(fp,"%s",a);			//输入城市的名字
+
+	while (strcmp(a,"end")!= 0){		//输入end就停止输入城市名字信息
+	
+
+		strcpy(G.b[count],a);		//使用字符串复制把a数组的城市名字复制到b数组中
+				
+		printf("Input the information of the City\n");
+
+		fscanf(fp,"%s",a);			//再次输入城市名字
+
+		count++;					//统计城市输入的个数
+	}
+
+	G.n = count;					//统计城市的个数
+	
+	fflush(stdin);					//清除缓存区
+	
+	for (int k = 0;k<G.n ;k++ ){	//通过for循环初始化邻接矩阵
+	
+		for (int l = 0;l < G.n ;l++ ){
+		
+			if (k == l){			//使对角线的值为0
+			
+				G.edges[k][l] = 0;
+			}
+			else{					//其余的地方为无穷大
+				G.edges[k][l] = F;
+			}
+		}
+	}
+	
+	printf("The number of the City is %d:\n",G.n);
+	
+	printf("Input the number of the road:\n");
+	
+	fscanf(fp,"%d",&G.e);			//文件读入边
+	
+	printf("%d\n",G.e);
+	
+	if (G.e == 0){					//如果边数为0，那么出错
+		
+		printf("Error!!\n");
+		
+		return ;
+	}
+	
+	fflush(stdin);
+	
+	for(i = 0 ; i < G.e ; i++){		//图的边循环完成邻接矩阵的输入
+		
+		printf("Input the information of the road ; begining and ending :\n");	//输入哪两个城市有路
+		
+		fscanf(fp,"%d",&begin);
+		
+		fscanf(fp,"%d",&end);
+		
+		printf("Input the pow of the road:\n");		//输入路的代价（权值）
+		
+		fscanf(fp,"%d",&pow);
+		
+		G.edges[begin][end] = pow;					//无向图邻接矩阵生成
+		
+		G.edges[end][begin] = pow;
+	}
+
+	fclose(fp);
+}
+void print(){					//输入邻接矩阵图
+	
+	int i , j , k , m = 0 ;
+	
+	while(m<G.n){				//输出城市的名字
+		
+		printf("%s\n",G.b[m]);
+		
+		m++;
+	}
+	for (i = 0 ; i < G.n ; i++){		//输出邻接矩阵
+		
+		k = 1 ; 
+		
+		for (j = 0 ; j < G.n ; j++){
+			
+			printf("%5d",G.edges[i][j]);	//%5d是控制两个输出结果之间空5个空格
+			
+			if (k == G.n)printf("\n");		//控制每输出顶点数个数时候换行
+			
+			k++;
+		}
+	
+	}
+
+
+}
+int Prim(){
+	
+	edge temp;				//用来排序tree[]数组
+	
+	int i , j ,d , min , k ,s , v;
+	
+	int built;				//任意城市创建最小生成树
+	
+	printf("Input the number you want to bulit:\n");
+	
+	scanf("%d",&built);
+	
+	built--;				//人为人物第0个城市便是第一个城市
+	
+	fflush(stdin);
+	
+	for (i = 0; i<G.n ; i++){	//初始化tree数组
+	
+		tree[i].beg = built;	
+		
+		tree[i].en = i;
+		
+		tree[i].length=G.edges[built][i];
+	}
+	
+	for (k = 0 ;k<G.n ;k++ ){		
+		
+		min = tree[k].length;
+		
+		s = k;
+		
+		for (j = k+1;j< G.n;j++){		//找到每趟循环最小的边
+		
+			if (min > tree[j].length){
+					
+					min = tree[j].length;
+					s = j;			
+				}
+		}
+
+		v  = tree[s].en;				//记录下最小边的终止节点
+		
+		temp = tree[s];					//通过交换使最小边靠前，同时防止出现v0---v0的情况发生
+		
+		tree[s] = tree[k];
+		
+		tree[k] = temp;					
+		
+		for (j = k+1;j<G.n ;j++){		//通过循环来更新tree数组的权值
+		
+			d = G.edges[v][tree[j].en];	
+			
+			if (d<tree[j].length){		//此for循环用来比较此节点邻接矩阵中的距离和上一个节点邻接矩阵的距离存不存在最短
+			
+				tree[j].length = d;		//存在则更新掉tree数组的权值和边初始节点
+				tree[j].beg = v;
+			}
+		}
+	}
+	
+	printf("********\n");
+	
+	for (j = 1;j< G.n ;j++ ){		//j = 0存储初始节点到初始节点的距离，所以从j = 1开始
+	
+		printf("%s---%s %d\n",G.b[tree[j].beg],G.b[tree[j].en],tree[j].length);
+	}
+	
+	int sum = 0;
+
+	for (j = 0;j< G.n ; j++){		//求生成树的所有代价和
+	
+		sum+=tree[j].length;
+	}
+	
+	printf("The Cicy of start is: %s\n",G.b[built]);
+
+	return sum;
+
+}
+int Kruskal(){
+	
+	Edge E[M*M];				//用来储存图的所有边，有M个节点最大有M*M条边
+	
+	int i , j , k ,s1 , s2 , mul = 0;
+	
+	int vset[M];				//储存每个节点的连通分量
+	
+	k = 0 ;
+	
+	for (i = 0;i<G.n ;i++ ){	//for循环来默认使每个节点的连通分量等于他的顶点序号如v0 = 0；
+	
+		vset[i] = i;			
+	}
+	for (i = 0;i<G.n ; i++){	//for循环记录下所有边并存在E数组中
+	
+		for (j = 0 ;j < G.n ;j++ ){
+		
+			if (G.edges[i][j] != 0 && G.edges[i][j]< F){
+			
+				E[k].u = i;
+				E[k].v = j;
+				E[k].power = G.edges[i][j];
+				k++;
+			}
+
+		}
+	}
+	
+	Edge temp;				//冒泡排序法的交换变量
+	
+	for (i = 0;i<k ; i++){	//冒泡排序把边权值进行升序排序
+	
+		for (j = 0 ;j < k ;j++ ){
+		
+			if (E[i].power<E[j].power){
+			
+				temp = E[i];
+				E[i] = E[j];
+				E[j] = temp;
+			}
+		}
+	}
+
+	k = 1;			//控制扫描的顶点数因为0----0没有边，所以从第一个顶点开始
+	
+	j = 0;			//控制扫描E数组
+	
+	while (k<G.n){	//扫描全部顶点
+	
+		s1 = vset[E[j].u];		//记录此初始顶点的连通分量
+		
+		s2 = vset[E[j].v];		//记录此终止顶点的连通分量
+		
+		if (s1 != s2){			//如果连通分量不相等则为生成树的一条边
+		
+			printf("%s---->%s %d\n",G.b[E[j].u],G.b[E[j].v],E[j].power);//输出此时的顶点和最小边
+			
+			k++;				
+			mul+=E[j].power;	//求权值和
+			for (i = 0;i<G.n ;i++ )	{	//把刚生成的边两点权值刷新一样
+			
+				if (vset[i] == s2)
+				{
+					vset[i] = s1;
+				}
+			}
+		}
+		j++;
+	}
+	printf("The Cicy of start is:%s\n",G.b[0]);		//输出开始城市
+
+	return mul;
+}
+
+int Find(){				//查找最小代价的两个城市
+	
+	int i , j , k , min ;
+	
+	k = 0;
+	
+	Edge E[M*M];		//用来储存边的信息
+	
+	Edge temp;			//排序的中间变量
+	
+	for (i = 0;i<G.n ; i++)	//初始化E数组
+	{
+		for (j = 0 ;j < G.n ;j++ )
+		{
+			if (G.edges[i][j] != 0 && G.edges[i][j]< F)
+			{
+				E[k].u = i;
+				E[k].v = j;
+				E[k].power =G.edges[i][j];
+	
+				k++;
+			}
+
+		}
+	}
+
+	for (i = 0;i<k ; i++)//冒泡排序
+	{
+		for (j = 0 ;j < k ;j++ )
+		{
+			if (E[i].power<E[j].power)
+			{
+				temp = E[i];
+				E[i] = E[j];
+				E[j] = temp;
+			}
+		}
+	}
+	
+	min = E[0].power;		//排序完后E[0]储存最短的边
+	printf("%s------%s \n",G.b[E[0].u],G.b[E[0].v]);
+	return min;
+
+}
+
+void Menu(){
+	printf("*********************************************************\n");
+	printf("*~~~~~~~Welcome to city planning system~~~~~~~~~~~~~~~~~*\n");
+	printf("*                                                       *\n");
+	printf("* 1、List the plans of the provinces                    *\n");//城市清单
+	printf("* 2、Capital query                                      *\n");//投入资金查询
+	printf("* 3、Financial Review                                   *\n");//资金复查
+	printf("* 4、Two city minimum funding query                     *\n");//最少城市投入
+	printf("* 5、City rules matrix					*\n");				  //城市规划矩阵图
+	printf("* 6、Exit                                               *\n");
+	printf("*                                                       *\n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	printf("*********************************************************\n");
+}
+
+int main(){
+	Menu();
+	char Provinces_name[5][10];
+	char name[10];
+	int Finance , sum , mul , min;
+	FILE *rf;
+	rf = fopen("Provinces.txt","r");
+	int i ;
+	for (i = 0;i<5 ;i++ )
+	{
+		fscanf(rf,"%s",Provinces_name[i]);
+	}
+	int num;
+	while (1)
+	{	
+		scanf("%d",&num);
+		switch (num)
+		{
+		case 1:for (i = 0;i<5 ;i++ ){
+				
+					printf("%s\n",Provinces_name[i]);
+				}
+			printf("*************\n");break;
+		case 2:printf("Input The name of the Province:\n");
+				gets(name);
+				
+				if (strcmp(name,"山西省")== 0){
+						Creat("Shanxi_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						sum = Prim();
+						printf("Minimum capital investment is : %d\n",sum);
+						if (sum <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"陕西省")== 0){
+					
+						Creat("Sanxi_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						sum = Prim();
+						printf("Minimum capital investment is : %d\n",sum);
+						if (sum <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"广东省")== 0){
+					
+						Creat("Guangdong_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						sum = Prim();
+						printf("Minimum capital investment is : %d\n",sum);
+						if (sum <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"福建省")== 0){
+					
+						Creat("Fujian_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						sum = Prim();
+						printf("Minimum capital investment is : %d\n",sum);
+						if (sum <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"四川省")== 0){
+					
+						Creat("Sichuan_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						sum = Prim();
+						printf("Minimum capital investment is : %d\n",sum);
+						if (sum <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}
+				break;
+		case 3:printf("Input The name of the Province:\n");
+				gets(name);
+				if (strcmp(name,"山西省")== 0){
+						Creat("Shanxi_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						mul = Kruskal();
+						printf("Minimum capital investment : %d\n",mul);
+						if (mul <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"陕西省")== 0){
+					
+						Creat("Sanxi_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						mul = Kruskal();
+						printf("Minimum capital investment : %d\n",mul);
+						if (mul <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"广东省")== 0){
+					
+						Creat("Guangdong_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						mul = Kruskal();
+						printf("Minimum capital investment : %d\n",mul);
+						if (mul <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"福建省")== 0){
+					
+						Creat("Fujian_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						mul = Kruskal();
+						printf("Minimum capital investment : %d\n",mul);
+						if (mul <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+				}else if (strcmp(name,"四川省")== 0){
+					
+						Creat("Sichuan_Province.txt");
+						printf("Input your Finance:\n");
+						scanf("%d",&Finance);
+						mul = Kruskal();
+						printf("Minimum capital investment : %d\n",mul);
+						if (mul <= Finance){
+						
+							printf("Capital surplus\n");	//资金盈余
+						}else{
+							printf("Capital loss\n");	//资金亏损
+						}
+
+				}
+				break;
+		case 4:	printf("Input The name of the Province:\n");
+				gets(name);
+				
+				if (strcmp(name,"山西省")== 0){
+						Creat("Shanxi_Province.txt");
+						printf("This are Two City:\n");
+						min = Find();
+						printf("The minmun of the power :\n");
+						printf("%d\n",min);
+						
+				}else if (strcmp(name,"陕西省")== 0){
+						Creat("Sanxi_Province.txt");
+						printf("This are Two City:\n");
+						min = Find();
+						printf("The minmun of the power :\n");
+						printf("%d\n",min);
+						
+				}else if (strcmp(name,"广东省")== 0){
+						Creat("Guangdong_Province.txt");
+						printf("This are Two City:\n");
+						min = Find();
+						printf("The minmun of the power :\n");
+						printf("%d\n",min);
+						
+				}else if (strcmp(name,"福建省")== 0){
+						Creat("Fujian_Province.txt");
+						printf("This are Two City:\n");
+						min = Find();
+						printf("The minmun of the power :\n");
+						printf("%d\n",min);
+						
+				}else if (strcmp(name,"四川省")== 0){
+						Creat("sichuan_Province.txt");
+						printf("This are Two City:\n");
+						min = Find();
+						printf("The minmun of the power :\n");
+						printf("%d\n",min);
+						
+				}
+				break;
+		case 5:printf("Input The name of the Province:\n");
+				gets(name);
+				
+				if (strcmp(name,"山西省")== 0){
+						Creat("Shanxi_Province.txt");
+						printf("City rules matrix is :\n");
+						print();
+				}else if (strcmp(name,"陕西省")== 0){
+					
+						Creat("Sanxi_Province.txt");
+						printf("City rules matrix is :\n");
+						print();
+				}else if (strcmp(name,"广东省")== 0){
+					
+						Creat("Guangdong_Province.txt");
+						printf("City rules matrix is :\n");
+						print();
+				}else if (strcmp(name,"福建省")== 0){
+					
+						Creat("Fujian_Province.txt");
+						printf("City rules matrix is :\n");
+						print();
+				}else if (strcmp(name,"四川省")== 0){
+					
+						Creat("Sichuan_Province.txt");
+						printf("City rules matrix is :\n");
+						print();
+				}
+				break;
+		case 6:exit(-1);break;
+	}
+
+	
+	}
+	return 0 ;
+}
