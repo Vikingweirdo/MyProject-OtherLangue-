@@ -1,0 +1,11 @@
+package UI;
+import javax.swing.*;
+
+public class MainActivity {
+	private static MyWindow myWin = null;
+	
+	public static void main(String[] args){
+		myWin = new MyWindow();
+		myWin.init();	//ÏÔÊ¾´°¿Ú
+	}
+}
